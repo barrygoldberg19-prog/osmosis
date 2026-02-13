@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { getServerSession } from 'next-auth/next'
+import { NextApiRequest, NextApiResponse } from 'next'
+import { getServerSession } from 'next-auth'
 import { authOptions } from './auth/[...nextauth]'
 import { createClient } from '@supabase/supabase-js'
 
@@ -8,31 +8,33 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const session = await getServerSession(req, res, authOptions)
-
-  if (!session) {
-    return res.status(401).json({ error: 'Unauthorized' })
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
-    // Get user's Twitter access token from Supabase
+    const session = await getServerSession(req, res, authOptions)
+
+    if (!session?.user?.id) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    // Get user's Twitter access token from database
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('twitter_id, twitter_access_token')
+      .select('twitter_access_token, twitter_id')
       .eq('id', session.user.id)
       .single()
 
-    if (userError || !userData) {
-      return res.status(404).json({ error: 'User not found' })
+    if (userError || !userData?.twitter_access_token) {
+      console.error('Error fetching user data:', userError)
+      return res.status(200).json({ data: [] })
     }
 
-    // Fetch following list from X API v2
+    // Fetch following list from Twitter API
     const response = await fetch(
-      `https://api.twitter.com/2/users/${userData.twitter_id}/following?max_results=100&user.fields=profile_image_url,description`,
+      `https://api.twitter.com/2/users/${userData.twitter_id}/following?max_results=10&user.fields=profile_image_url`,
       {
         headers: {
           Authorization: `Bearer ${userData.twitter_access_token}`,
@@ -41,25 +43,14 @@ export default async function handler(
     )
 
     if (!response.ok) {
-      throw new Error('Failed to fetch following list')
+      console.error('Twitter API error:', response.status)
+      return res.status(200).json({ data: [] })
     }
 
-    const data = await response.json()
-
-    // Save following list to Supabase
-    const { error: saveError } = await supabase
-      .from('user_following')
-      .upsert({
-        user_id: session.user.id,
-        following_data: data.data,
-        updated_at: new Date().toISOString(),
-      })
-
-    if (saveError) console.error('Error saving following list:', saveError)
-
-    res.status(200).json(data)
+    const twitterData = await response.json()
+    return res.status(200).json({ data: twitterData.data || [] })
   } catch (error) {
     console.error('Error fetching following:', error)
-    res.status(500).json({ error: 'Failed to fetch following list' })
+    return res.status(200).json({ data: [] })
   }
 }
