@@ -19,7 +19,6 @@ export default function AddBookModal({ isOpen, onClose, onAdd }: AddBookModalPro
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
     try {
       await onAdd({ title, author, status })
       setTitle('')
@@ -37,7 +36,7 @@ export default function AddBookModal({ isOpen, onClose, onAdd }: AddBookModalPro
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Add a Book</h2>
-
+        
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -50,7 +49,7 @@ export default function AddBookModal({ isOpen, onClose, onAdd }: AddBookModalPro
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
                 placeholder="e.g., Project Hail Mary"
               />
             </div>
@@ -65,7 +64,7 @@ export default function AddBookModal({ isOpen, onClose, onAdd }: AddBookModalPro
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
                 placeholder="e.g., Andy Weir"
               />
             </div>
@@ -78,7 +77,7 @@ export default function AddBookModal({ isOpen, onClose, onAdd }: AddBookModalPro
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
               >
                 <option value="reading">Currently Reading</option>
                 <option value="finished">Finished</option>
