@@ -108,7 +108,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center space-y-8 p-8">
-          <h1 className="text-6xl font-bold text-gray-900">Up2</h1>
+          <h1 className="text-6xl font-bold text-gray-900">Osmosis</h1>
           <p className="text-2xl text-gray-700">
             Share what you're reading, listening to, and watching
           </p>
