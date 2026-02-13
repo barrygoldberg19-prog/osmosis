@@ -27,9 +27,11 @@ export default function Home() {
     try {
       const res = await fetch('/api/following')
       const data = await res.json()
-      setFollowing(data.data || [])
+      // FIXED: data is now an array directly, not wrapped in { data: [] }
+      setFollowing(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching following:', error)
+      setFollowing([])
     } finally {
       setLoadingFollowing(false)
     }
@@ -40,9 +42,11 @@ export default function Home() {
     try {
       const res = await fetch('/api/books')
       const data = await res.json()
-      setBooks(data)
+      // FIXED: Added defensive check to ensure it's an array
+      setBooks(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching books:', error)
+      setBooks([])
     } finally {
       setLoadingBooks(false)
     }
@@ -50,17 +54,30 @@ export default function Home() {
 
   const handleAddBook = async (bookData: { title: string; author: string; status: string }) => {
     try {
+      console.log('Adding book:', bookData) // Debug log
+      
       const res = await fetch('/api/books', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bookData),
       })
 
-      if (res.ok) {
-        fetchBooks()
+      console.log('Response status:', res.status) // Debug log
+      
+      if (!res.ok) {
+        const errorData = await res.json()
+        console.error('Error response:', errorData)
+        throw new Error(errorData.error || 'Failed to add book')
       }
+
+      const newBook = await res.json()
+      console.log('Book added successfully:', newBook) // Debug log
+      
+      // Refresh the books list
+      await fetchBooks()
     } catch (error) {
       console.error('Error adding book:', error)
+      alert('Failed to add book. Please try again.')
     }
   }
 
@@ -74,6 +91,8 @@ export default function Home() {
 
       if (res.ok) {
         fetchBooks()
+      } else {
+        console.error('Delete failed:', await res.json())
       }
     } catch (error) {
       console.error('Error deleting book:', error)
@@ -90,6 +109,8 @@ export default function Home() {
 
       if (res.ok) {
         fetchBooks()
+      } else {
+        console.error('Status update failed:', await res.json())
       }
     } catch (error) {
       console.error('Error updating book status:', error)
