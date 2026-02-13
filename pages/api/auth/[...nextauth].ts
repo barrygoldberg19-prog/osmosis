@@ -15,17 +15,24 @@ export const authOptions = {
       version: "2.0",
     }),
   ],
+  // CRITICAL FIX: Specify JWT session strategy
+  session: {
+    strategy: "jwt" as const,
+  },
   callbacks: {
     async signIn({ user, account, profile }: any) {
       try {
-        // Save user to Supabase when they sign in
+        // Generate consistent user ID from Twitter ID
         const twitterId = profile?.data?.id || account?.providerAccountId
         const twitterUsername = profile?.data?.username || user?.name
+        
+        // Use Twitter ID as the primary user ID for consistency
+        const userId = `twitter_${twitterId}`
         
         const { error } = await supabase
           .from('users')
           .upsert({
-            id: user.id,
+            id: userId, // Use consistent ID
             email: user.email || null,
             name: user.name,
             image: user.image,
@@ -43,20 +50,18 @@ export const authOptions = {
       return true
     },
     async jwt({ token, user, account, profile }: any) {
-      // Store user ID in JWT token
-      if (user) {
-        token.userId = user.id
+      // CRITICAL FIX: Set userId in JWT token on first sign in
+      if (profile?.data?.id) {
+        token.userId = `twitter_${profile.data.id}`
+        token.twitterId = profile.data.id
       }
       if (account) {
         token.accessToken = account.access_token
       }
-      if (profile?.data?.id) {
-        token.twitterId = profile.data.id
-      }
       return token
     },
     async session({ session, token }: any) {
-      // Add user ID to session from JWT token
+      // CRITICAL FIX: Add user ID to session from JWT token
       if (token?.userId) {
         session.user.id = token.userId
       }
@@ -70,6 +75,8 @@ export const authOptions = {
     signIn: '/',
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Enable debug mode to see what's happening (remove in production)
+  debug: process.env.NODE_ENV === 'development',
 }
 
 export default NextAuth(authOptions)
