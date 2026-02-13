@@ -47,9 +47,27 @@ export const authOptions = {
       if (error) console.error('Error saving user:', error)
       return true
     },
+    async jwt({ token, user, account, profile }: any) {
+      // Store user ID and Twitter data in JWT token
+      if (user) {
+        token.userId = user.id
+      }
+      if (account) {
+        token.accessToken = account.access_token
+      }
+      if (profile?.data) {
+        token.twitterId = profile.data.id
+      }
+      return token
+    },
     async session({ session, token }: any) {
-      // Add user ID to session
-      session.user.id = token.sub
+      // Add user ID to session from JWT token
+      if (token?.userId) {
+        session.user.id = token.userId
+      }
+      if (token?.twitterId) {
+        session.user.twitterId = token.twitterId
+      }
       return session
     },
   },
