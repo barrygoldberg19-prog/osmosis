@@ -15,9 +15,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const session = await getServerSession(req, res, authOptions)
-
+    
     if (!session?.user?.id) {
-      return res.status(401).json({ error: 'Unauthorized' })
+      // FIXED: Return proper 401 status with empty array
+      return res.status(401).json([])
     }
 
     // Get user's Twitter access token from database
@@ -29,7 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (userError || !userData?.twitter_access_token) {
       console.error('Error fetching user data:', userError)
-      return res.status(200).json({ data: [] })
+      // FIXED: Return array directly, not wrapped in object
+      return res.status(200).json([])
     }
 
     // Fetch following list from Twitter API
@@ -44,13 +46,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!response.ok) {
       console.error('Twitter API error:', response.status)
-      return res.status(200).json({ data: [] })
+      // FIXED: Return array directly, not wrapped in object
+      return res.status(200).json([])
     }
 
     const twitterData = await response.json()
-    return res.status(200).json({ data: twitterData.data || [] })
+    // FIXED: Return array directly, not wrapped in object
+    return res.status(200).json(twitterData.data || [])
   } catch (error) {
     console.error('Error fetching following:', error)
-    return res.status(200).json({ data: [] })
+    // FIXED: Return array directly, not wrapped in object
+    return res.status(200).json([])
   }
 }
