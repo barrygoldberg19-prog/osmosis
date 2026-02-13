@@ -19,6 +19,12 @@ export const authOptions = {
           scope: "tweet.read users.read follows.read offline.access",
         },
       },
+      userinfo: {
+        url: "https://api.twitter.com/2/users/me",
+        params: {
+          "user.fields": "profile_image_url",
+        },
+      },
     }),
   ],
   callbacks: {
@@ -52,4 +58,6 @@ export const authOptions = {
   },
 }
 
-export default NextAuth(authOptions)
+const handler = NextAuth(authOptions)
+
+export { handler as GET, handler as POST }
