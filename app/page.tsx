@@ -224,19 +224,6 @@ export default function Home() {
 
             {/* Music Section */}
             <MusicPlayer />
-
-            {/* Placeholders for Future Features */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">🎧 Podcasts</h3>
-                <p className="text-gray-500">Coming soon! Add your favorite podcasts.</p>
-              </div>
-
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">📺 YouTube</h3>
-                <p className="text-gray-500">Coming soon! Share what you're watching.</p>
-              </div>
-            </div>
           </div>
 
           {/* Right Column - X Following */}
