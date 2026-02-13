@@ -9,116 +9,124 @@ const supabase = createClient(
 )
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getServerSession(req, res, authOptions)
+  try {
+    const session = await getServerSession(req, res, authOptions)
 
-  if (!session) {
-    return res.status(401).json({ error: 'Unauthorized' })
-  }
-
-  const userId = session.user?.id
-
-  // GET - Fetch all books for the user
-  if (req.method === 'GET') {
-    try {
-      const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      return res.status(200).json(data || [])
-    } catch (error) {
-      console.error('Error fetching books:', error)
-      return res.status(500).json({ error: 'Failed to fetch books' })
+    if (!session?.user?.id) {
+      return res.status(401).json({ error: 'Unauthorized', books: [] })
     }
-  }
 
-  // POST - Add a new book
-  if (req.method === 'POST') {
-    try {
-      const { title, author, status } = req.body
+    const userId = session.user.id
 
-      if (!title || !author) {
-        return res.status(400).json({ error: 'Title and author are required' })
+    // GET - Fetch all books for the user
+    if (req.method === 'GET') {
+      try {
+        const { data, error } = await supabase
+          .from('books')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error('Supabase error:', error)
+          return res.status(200).json([]) // Return empty array on error
+        }
+
+        return res.status(200).json(data || [])
+      } catch (error) {
+        console.error('Error fetching books:', error)
+        return res.status(200).json([]) // Return empty array on error
       }
-
-      const { data, error } = await supabase
-        .from('books')
-        .insert({
-          user_id: userId,
-          title,
-          author,
-          status: status || 'reading',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      return res.status(201).json(data)
-    } catch (error) {
-      console.error('Error adding book:', error)
-      return res.status(500).json({ error: 'Failed to add book' })
     }
-  }
 
-  // PATCH - Update book status
-  if (req.method === 'PATCH') {
-    try {
-      const { id } = req.query
-      const { status } = req.body
+    // POST - Add a new book
+    if (req.method === 'POST') {
+      try {
+        const { title, author, status } = req.body
 
-      if (!id || !status) {
-        return res.status(400).json({ error: 'ID and status are required' })
+        if (!title || !author) {
+          return res.status(400).json({ error: 'Title and author are required' })
+        }
+
+        const { data, error } = await supabase
+          .from('books')
+          .insert({
+            user_id: userId,
+            title,
+            author,
+            status: status || 'reading',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        return res.status(201).json(data)
+      } catch (error) {
+        console.error('Error adding book:', error)
+        return res.status(500).json({ error: 'Failed to add book' })
       }
-
-      const { data, error } = await supabase
-        .from('books')
-        .update({
-          status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      return res.status(200).json(data)
-    } catch (error) {
-      console.error('Error updating book:', error)
-      return res.status(500).json({ error: 'Failed to update book' })
     }
-  }
 
-  // DELETE - Remove a book
-  if (req.method === 'DELETE') {
-    try {
-      const { id } = req.query
+    // PATCH - Update book status
+    if (req.method === 'PATCH') {
+      try {
+        const { id } = req.query
+        const { status } = req.body
 
-      if (!id) {
-        return res.status(400).json({ error: 'ID is required' })
+        if (!id || !status) {
+          return res.status(400).json({ error: 'ID and status are required' })
+        }
+
+        const { data, error } = await supabase
+          .from('books')
+          .update({
+            status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id)
+          .eq('user_id', userId)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        return res.status(200).json(data)
+      } catch (error) {
+        console.error('Error updating book:', error)
+        return res.status(500).json({ error: 'Failed to update book' })
       }
-
-      const { error } = await supabase
-        .from('books')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId)
-
-      if (error) throw error
-
-      return res.status(200).json({ success: true })
-    } catch (error) {
-      console.error('Error deleting book:', error)
-      return res.status(500).json({ error: 'Failed to delete book' })
     }
-  }
 
-  return res.status(405).json({ error: 'Method not allowed' })
+    // DELETE - Remove a book
+    if (req.method === 'DELETE') {
+      try {
+        const { id } = req.query
+
+        if (!id) {
+          return res.status(400).json({ error: 'ID is required' })
+        }
+
+        const { error } = await supabase
+          .from('books')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', userId)
+
+        if (error) throw error
+
+        return res.status(200).json({ success: true })
+      } catch (error) {
+        console.error('Error deleting book:', error)
+        return res.status(500).json({ error: 'Failed to delete book' })
+      }
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' })
+  } catch (error) {
+    console.error('API error:', error)
+    return res.status(500).json({ error: 'Internal server error', books: [] })
+  }
 }
