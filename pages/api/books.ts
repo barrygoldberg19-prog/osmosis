@@ -11,9 +11,10 @@ const supabase = createClient(
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const session = await getServerSession(req, res, authOptions)
-
+    
     if (!session?.user?.id) {
-      return res.status(401).json({ error: 'Unauthorized', books: [] })
+      // FIXED: Return empty array instead of object
+      return res.status(401).json([])
     }
 
     const userId = session.user.id
@@ -127,6 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' })
   } catch (error) {
     console.error('API error:', error)
-    return res.status(500).json({ error: 'Internal server error', books: [] })
+    // FIXED: Return empty array instead of object with books property
+    return res.status(500).json([])
   }
 }
